@@ -12,6 +12,13 @@
 
 #include <librpitx/librpitx.h>
 
+#define GPFSET0 (0x1c / 4)
+#define GPFSET1 (0x20 / 4)
+#define GPFCLR0 (0x28 / 4)
+#define GPFCLR1 (0x2c / 4)
+
+#define GPIO_PA_ENABLE 0
+
 bool running=true;
 
 #define PROGRAM_VERSION "0.1"
@@ -60,6 +67,9 @@ int main(int argc, char **argv) {
    
     int a;
 	int anyargs = 0;
+    
+    generalgpio genpio;
+    uint32_t tmp;
 
     float frequency=14.07e6;
     float ppm=1000;
@@ -182,7 +192,11 @@ int main(int argc, char **argv) {
     }    
 	//padgpio pad;
 	//pad.setlevel(7);// Set max power
-
+	
+	tmp = genpio.gpioreg[GPFSEL0];
+    genpio.gpioreg[GPFSEL0] = (tmp & ~(0x3 << GPIO_PA_ENABLE)) | (0x1 & (0x3 << GPIO_PA_ENABLE)); //GPIO0 as output (=1)
+    genpio.gpioreg[GPFSET0] = 1 << GPIO_PA_ENABLE; //set GPIO0 high (PA enable is low active)
+    
 	unsigned char Symbols[FifoSize];
     
     for(size_t i=0;(i<ft8::NN)&&running;i++)
@@ -203,8 +217,10 @@ int main(int argc, char **argv) {
     {
         if(!running) exit(0);
         fprintf(stderr,"Tx!\n");
+        genpio.gpioreg[GPFCLR0] = 1 << GPIO_PA_ENABLE; //set GPIO0 low to enable PA
         fsk.SetSymbols(Symbols, (ft8::NN));
         fsk.stop();
+        genpio.gpioreg[GPFSET0] = 1 << GPIO_PA_ENABLE; //disable PA
         fprintf(stderr,"End of Tx\n");
         if(repeat)
         {
