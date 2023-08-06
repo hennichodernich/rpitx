@@ -17,7 +17,7 @@
 #define GPFCLR0 (0x28 / 4)
 #define GPFCLR1 (0x2c / 4)
 
-#define GPIO_PA_ENABLE 0
+#define GPIO_PA_ENABLE 17 
 
 bool running=true;
 
@@ -68,8 +68,6 @@ int main(int argc, char **argv) {
     int a;
 	int anyargs = 0;
     
-    generalgpio genpio;
-    uint32_t tmp;
 
     float frequency=14.07e6;
     float ppm=1000;
@@ -192,10 +190,12 @@ int main(int argc, char **argv) {
     }    
 	//padgpio pad;
 	//pad.setlevel(7);// Set max power
-	
-	tmp = genpio.gpioreg[GPFSEL0];
-    genpio.gpioreg[GPFSEL0] = (tmp & ~(0x3 << GPIO_PA_ENABLE)) | (0x1 & (0x3 << GPIO_PA_ENABLE)); //GPIO0 as output (=1)
-    genpio.gpioreg[GPFSET0] = 1 << GPIO_PA_ENABLE; //set GPIO0 high (PA enable is low active)
+
+   fprintf(stderr,"Init GPIO\n");
+   generalgpio genpio;
+   genpio.setmode(GPIO_PA_ENABLE, fsel_output); //GPIO0 as output (=1)
+   genpio.gpioreg[GPFSET0] = 1 << GPIO_PA_ENABLE; //set GPIO0 high (PA enable is low active)
+   fprintf(stderr,"Init GPIO done\n");
     
 	unsigned char Symbols[FifoSize];
     
